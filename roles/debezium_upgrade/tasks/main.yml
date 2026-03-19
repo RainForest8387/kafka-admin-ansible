@@ -1,18 +1,22 @@
 ---
-- name: debezium_upgrade | бэкап текущих плагинов
-  ansible.builtin.command:
-    cmd: "cp -r {{ kafka_plugins_dir }} {{ kafka_plugins_dir }}.backup.{{ ansible_date_time.epoch }}"
-  args:
-    creates: "{{ kafka_plugins_dir }}.backup.{{ ansible_date_time.epoch }}"
+- name: Создать бэкап текущих плагинов
+  ansible.builtin.copy:
+    src: "{{ kafka_plugins_dir }}/"
+    dest: "{{ kafka_plugins_dir }}.backup.{{ ansible_date_time.epoch }}"
+    remote_src: true
+    backup: yes
+    owner: kafka
+    group: kafka
+    mode: preserve
   become: true
 
-- name: debezium_upgrade | Остановка Kafka Connect перед обновлением
+- name: Остановить Kafka Connect перед обновлением
   ansible.builtin.service:
     name: "{{ kafka_connect_service_name }}"
     state: stopped
   become: true
 
-- name: debezium_upgrade | Обновление плагинов Debezium
+- name: Обновить плагины Debezium из files/
   block:
     - name: Создать каталог плагинов
       ansible.builtin.file:
@@ -23,14 +27,14 @@
         mode: "0755"
       become: true
 
-    - name: debezium_upgrade | Удаление старых Debezium плагинов
+    - name: Удалить только старые Debezium плагины
       ansible.builtin.file:
         path: "{{ kafka_plugins_dir }}/{{ item.name }}"
         state: absent
       loop: "{{ debezium_connectors }}"
       become: true
 
-    - name: debezium_upgrade | Распаковка новых плагинов из files/
+    - name: Распаковать новые плагины из files/
       ansible.builtin.unarchive:
         src: "{{ item.archive_file }}"
         dest: "{{ kafka_plugins_dir }}/{{ item.name }}"
@@ -39,32 +43,35 @@
       become: true
 
   rescue:
-    - name: debezium_upgrade | Восстановление из бэкапа при ошибке
-      ansible.builtin.command:
-        cmd: "cp -r {{ kafka_plugins_dir }}.backup.{{ ansible_date_time.epoch }}/* {{ kafka_plugins_dir }}/ || true"
+    - name: Восстановить из бэкапа при ошибке
+      ansible.builtin.copy:
+        src: "{{ kafka_plugins_dir }}.backup.{{ ansible_date_time.epoch }}/"
+        dest: "{{ kafka_plugins_dir }}/"
+        remote_src: true
       become: true
     - name: Рестарт Kafka Connect после восстановления
       ansible.builtin.service:
         name: "{{ kafka_connect_service_name }}"
         state: started
       become: true
-      ignore_errors: true
 
-- name: debezium_upgrade | Запуск Kafka Connect после обновления
+- name: Запустить Kafka Connect после обновления
   ansible.builtin.service:
     name: "{{ kafka_connect_service_name }}"
     state: started
     enabled: true
   become: true
 
-- name: debezium_upgrade | Проверка новых плагинов
+- name: Проверка новых плагинов
   ansible.builtin.stat:
     path: "{{ kafka_plugins_dir }}/{{ item.name }}"
   loop: "{{ debezium_connectors }}"
   register: plugin_check
 
-- name: debezium_upgrade | Статус
+- name: Отчет об обновлении
   ansible.builtin.debug:
-    msg: "Плагин {{ item.item.name }} обновлен: {{ item.stat.exists }}"
+    msg: "✅ Плагин {{ item.item.name }} обновлен: {{ item.stat.exists }}"
   loop: "{{ plugin_check.results }}"
-  when: plugin_check is succeeded
+  when:
+    - plugin_check is succeeded
+    - item.stat.exists
