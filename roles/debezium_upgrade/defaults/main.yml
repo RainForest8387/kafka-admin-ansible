@@ -1,0 +1,16 @@
+---
+debezium_version_new: "2.7.4.Final"
+
+kafka_plugins_dir: "/kafka/plugins"
+
+debezium_connectors:
+  - name: "debezium-connector-jdbc"
+    archive_file: "debezium-connector-jdbc-{{ debezium_version_new }}-plugin.tar.gz"
+  - name: "debezium-connector-oracle"
+    archive_file: "debezium-connector-oracle-{{ debezium_version_new }}-plugin.tar.gz"
+  - name: "debezium-connector-postgres"
+    archive_file: "debezium-connector-postgres-{{ debezium_version_new }}-plugin.tar.gz"
+  - name: "debezium-connector-sqlserver"
+    archive_file: "debezium-connector-sqlserver-{{ debezium_version_new }}-plugin.tar.gz"
+
+kafka_connect_service_name: "kafka-connect"
