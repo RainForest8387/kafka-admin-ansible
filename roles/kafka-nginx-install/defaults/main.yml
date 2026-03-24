@@ -1,8 +1,12 @@
 ---
 # Пакеты для установки
-kafka_nginx_packages:
+kafka_nginx_packages_debian:
   - nginx
   - apache2-utils
+
+kafka_nginx_packages_redhat:
+  - nginx
+  - httpd-tools
 
 # Сервис nginx
 kafka_nginx_service: nginx
