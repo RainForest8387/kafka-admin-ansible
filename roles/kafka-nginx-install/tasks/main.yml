@@ -1,14 +1,28 @@
 ---
-- name: Update apt cache
+- name: Update apt cache (Debian/Ubuntu)
   ansible.builtin.apt:
     update_cache: yes
     cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
 
-- name: Install nginx and apache2-utils
+- name: Update dnf cache (RedHat/CentOS 9+)
+  ansible.builtin.dnf:
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
+
+- name: Install packages with apt (Debian/Ubuntu)
   ansible.builtin.apt:
-    pkg: "{{ kafka_nginx_packages }}"
+    pkg: "{{ kafka_nginx_packages_debian }}"
     state: present
   notify: start nginx
+  when: ansible_os_family == "Debian"
+
+- name: Install packages with dnf (RedHat/CentOS 9+)
+  ansible.builtin.dnf:
+    name: "{{ kafka_nginx_packages_redhat }}"
+    state: present
+  notify: start nginx
+  when: ansible_os_family == "RedHat"
 
 - name: Ensure nginx is started and enabled
   ansible.builtin.systemd:
