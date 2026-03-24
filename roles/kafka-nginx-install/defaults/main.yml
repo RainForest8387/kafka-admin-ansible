@@ -1,0 +1,8 @@
+---
+# Пакеты для установки
+kafka_nginx_packages:
+  - nginx
+  - apache2-utils
+
+# Сервис nginx
+kafka_nginx_service: nginx

@@ -1,0 +1,17 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install nginx and apache2-utils
+  ansible.builtin.apt:
+    pkg: "{{ kafka_nginx_packages }}"
+    state: present
+  notify: start nginx
+
+- name: Ensure nginx is started and enabled
+  ansible.builtin.systemd:
+    name: "{{ kafka_nginx_service }}"
+    state: started
+    enabled: yes

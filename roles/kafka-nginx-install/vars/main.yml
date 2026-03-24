@@ -1,0 +1,5 @@
+---
+# Имена для Debian/Ubuntu
+kafka_nginx_os_packages:
+  - name: "{{ kafka_nginx_packages }}"
+    state: present
